@@ -23,4 +23,5 @@ dependencies {
     compile group: 'com.typesafe.akka', name: 'akka-persistence-cassandra_2.12', version: '0.96'
     compile 'com.github.signaflo:timeseries:0.4'
     compile group: 'com.lightbend.akka', name: 'akka-stream-alpakka-mqtt_2.12', version: '1.0.0'
+    compile group: 'com.typesafe.akka', name: 'akka-cluster-metrics_2.12', version: '2.5.22'
 }

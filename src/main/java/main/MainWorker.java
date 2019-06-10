@@ -1,10 +1,12 @@
 package main;
 
 import actors.listeners.ClusterListener;
+import actors.listeners.MetricsListener;
 import actors.worker.WorkerRegion;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
+import akka.cluster.Cluster;
 import akka.cluster.client.ClusterClient;
 import akka.cluster.client.ClusterClientSettings;
 import com.typesafe.config.Config;
@@ -20,15 +22,20 @@ public class MainWorker {
 
         ActorSystem system = ActorSystem.create(clusterName, config);
 
-        system.actorOf(Props.create(ClusterListener.class), "cluster-listener-worker");
+        Cluster.get(system)
+                .registerOnMemberUp(
+                        () -> {
+                            system.actorOf(Props.create(ClusterListener.class), "cluster-listener-worker");
 
-        final ActorRef clusterClient =
-                system.actorOf(
-                        ClusterClient.props(
-                                ClusterClientSettings.create(system)),
-                        "clusterClient");
+                            final ActorRef clusterClient =
+                                    system.actorOf(
+                                            ClusterClient.props(
+                                                    ClusterClientSettings.create(system)),
+                                            "clusterClient");
 
-        // The Id of the worker region will be the port
-        system.actorOf(WorkerRegion.props(port, clusterClient), "workerRegion");
+                            // The Id of the worker region will be the port
+                            system.actorOf(WorkerRegion.props(port, clusterClient), "workerRegion");
+                            system.actorOf(Props.create(MetricsListener.class), "metricsListener");
+                        });
     }
 }

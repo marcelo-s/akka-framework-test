@@ -42,14 +42,14 @@ public class WorkAggregator extends AbstractActor {
     }
 
     private void handleModelProcessed(WorkerProtocol.SensorDataModelProcessed sensorDataModelProcessed) {
-        log.info("Work Aggregator >>> SensorDataId : {}  >> Received model params: {}",
+        log.info("Work Aggregator >>> Received model params >> SensorDataId : {}  >> Params : {}",
                 sensorData.getDataId(),
                 sensorDataModelProcessed.getArimaParams());
         numOfModelsToCompute -= 1;
         if (numOfModelsToCompute == 0) {
             arimaModelsProcessed.add(sensorDataModelProcessed);
             ProcessingResult processingResult = generateProcessingResult();
-            log.info("Work Aggregator >>> SensorDataId : {}  > Finished, sending results back to Worker ", sensorData.getDataId());
+            log.info("Work Aggregator >>> Finished SensorDataId : {}  >> Sending results back to Worker ", sensorData.getDataId());
             workerRef.tell(new WorkerProtocol.WorkProcessed(processingResult), self());
         } else {
             arimaModelsProcessed.add(sensorDataModelProcessed);
@@ -84,7 +84,7 @@ public class WorkAggregator extends AbstractActor {
     }
 
     private int computeMeasureInterval() {
-        return random.nextInt(5, 10);
+        return random.nextInt(10, 20);
     }
 
     private Sensor.OperationState computeOperationalState() {

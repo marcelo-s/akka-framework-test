@@ -5,6 +5,7 @@ import scala.concurrent.duration.Deadline;
 import scala.concurrent.duration.Duration;
 import scala.concurrent.duration.FiniteDuration;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -16,6 +17,8 @@ public class SensorDataState {
     private Set<String> acceptedSensorDataIds = new HashSet<>();
     private Set<String> completedSensorDataIds = new HashSet<>();
     private Map<String, Deadline> workerReceptionTimeouts = new HashMap<>();
+    private Map<String, WorkTime> sensorDataProcessingTimes = new HashMap<>();
+
 
     public SensorData updateState(SensorDataEvent event) {
         if (event instanceof SensorDataEvent.DataAccepted) {
@@ -33,11 +36,19 @@ public class SensorDataState {
             inProgressSensorDataMap.put(sensorDataToStart.getDataId(), sensorDataToStart);
             FiniteDuration workTimeout = Duration.create(10, TimeUnit.SECONDS);
             workerReceptionTimeouts.put(sensorDataToStart.getDataId(), Deadline.now().$plus(workTimeout));
+            sensorDataProcessingTimes.put(sensorDataToStart.getDataId(), new WorkTime(Instant.now()));
             return sensorDataToStart;
         } else if (event instanceof SensorDataEvent.DataProcessed) {
             SensorDataEvent.DataProcessed dataProcessed = (SensorDataEvent.DataProcessed) event;
             SensorData removedSensorData = inProgressSensorDataMap.remove(dataProcessed.getDataId());
             completedSensorDataIds.add(dataProcessed.getDataId());
+
+            sensorDataProcessingTimes.compute(dataProcessed.getDataId(), (id, workTime) -> {
+                workTime.setFinish(Instant.now());
+                long timeElapsed = sensorDataProcessingTimes.get(dataProcessed.getDataId()).getTimeElapsed();
+                System.out.println(String.format("*************************** TIME TAKEN FOR  SENSOR DATA ID : %s ----- TIME : %s ms", dataProcessed.getDataId(), timeElapsed));
+                return workTime;
+            });
             return removedSensorData;
         } else if (event instanceof SensorDataEvent.DataReceivedByWorker) {
             workerReceptionTimeouts.remove(((SensorDataEvent.DataReceivedByWorker) event).getDataId());
@@ -63,7 +74,7 @@ public class SensorDataState {
         return acceptedSensorDataIds.contains(sensorDataId);
     }
 
-    public int getPendingSensorData(){
+    public int getPendingSensorData() {
         return pendingSensorData.size();
     }
 

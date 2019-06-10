@@ -5,6 +5,7 @@ import akka.actor.AbstractActor;
 import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
+import com.github.signaflo.math.stats.distributions.Normal;
 import com.github.signaflo.timeseries.TimePeriod;
 import com.github.signaflo.timeseries.TimeSeries;
 import com.github.signaflo.timeseries.forecast.Forecast;
@@ -50,6 +51,15 @@ public class WorkProcessor extends AbstractActor {
         ), self());
     }
 
+    private double[] generateDataReadings() {
+        Normal normal = new Normal(25, 3);
+
+        double[] values = new double[70000];
+        for (int i = 0; i < values.length; i++) {
+            values[i] = normal.rand();
+        }
+        return values;
+    }
 
     private Arima computeModel(WorkerProtocol.SensorDataModelTask sensorDataModelTask) {
         List<Integer> params = sensorDataModelTask.getArimaOrderParams();
