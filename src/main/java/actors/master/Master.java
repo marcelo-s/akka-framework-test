@@ -12,6 +12,8 @@ import akka.event.LoggingAdapter;
 import akka.pattern.Patterns;
 import akka.persistence.AbstractPersistentActor;
 import akka.persistence.RecoveryCompleted;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import scala.concurrent.ExecutionContext;
 import scala.concurrent.duration.Deadline;
 import scala.concurrent.duration.FiniteDuration;
@@ -281,7 +283,12 @@ public class Master extends AbstractPersistentActor {
 
     @Override
     public String persistenceId() {
-        return "master-singleton";
+        Config config = ConfigFactory.load();
+        String systemName = config.getString("clustering.cluster.name");
+        StringBuilder sb = new StringBuilder();
+        sb.append(systemName);
+        sb.append("singleton");
+        return sb.toString();
     }
 
 }

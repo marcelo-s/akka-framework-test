@@ -1,15 +1,19 @@
 version: '3'
 services:
+
   iot:
-    image: frametest
+    image: marcelodock/framerasp
     ports:
       - "2540:2540"
+    depends_on:
+#      - "master"
+      - "mqttbroker"
     environment:
       CLUSTER_IP: iot
       CLUSTER_PORT: 2540
       SEED1_IP: iot
       SEED1_PORT: 2540
-      MASTER_SYSTEM_NAME: MasterSystem
+      MASTER_SYSTEM_NAME: MasterSystem1
       MASTER_IP: master
       MASTER_PORT: 2550
       MQTT_IP: mqttbroker
@@ -22,20 +26,50 @@ services:
     deploy:
       replicas: 1
       placement:
-        constraints: [node.role == manager]
-    command: gradle run --args="iot 1"
-#
+        constraints: [node.hostname == raspi1]
+    command: ["./wait-for-it.sh", "master:2550", "-t", "0", "--", "java", "-jar", "framework-test-1.0-all.jar", "iot", "1"]
+
+  iot2:
+    image: marcelodock/framerasp
+    ports:
+      - "2542:2542"
+    depends_on:
+      - "master2"
+      - "mqttbroker"
+    environment:
+      CLUSTER_IP: iot
+      CLUSTER_PORT: 2542
+      SEED1_IP: iot
+      SEED1_PORT: 2542
+      MASTER_SYSTEM_NAME: MasterSystem2
+      MASTER_IP: master2
+      MASTER_PORT: 2552
+      MQTT_IP: mqttbroker
+      MQTT_PORT: 1883
+      CASSANDRA_SEED: cass
+      #      SEED2_TCP_ADDR: seed2
+      ROLE: iot
+    networks:
+      - akka-wsn
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.hostname == raspi2]
+    command: ["./wait-for-it.sh", "master2:2552", "-t", "0", "--", "java", "-jar", "framework-test-1.0-all.jar", "iot", "1"]
+
   worker1:
-    image: frametest
+    image: marcelodock/framerasp
     ports:
       - "2560:2560" # Akka port
       - "8558:8558" # Http Management port
+    depends_on:
+      - "master"
     environment:
       CLUSTER_IP: worker1
       CLUSTER_PORT: 2560
       SEED1_IP: worker1
       SEED1_PORT: 2560
-      MASTER_SYSTEM_NAME: MasterSystem
+      MASTER_SYSTEM_NAME: MasterSystem1
       MASTER_IP: master
       MASTER_PORT: 2550
       #      SEED2_TCP_ADDR: seed2
@@ -46,22 +80,51 @@ services:
     deploy:
       replicas: 1
       placement:
-        constraints: [node.role == manager]
+        constraints: [node.hostname == raspimarcelo]
       restart_policy:
         condition: any
         delay: 10s
-    command: gradle run --args="worker"
+    command: ["./wait-for-it.sh", "master:2550", "-t", "0", "--", "java", "-jar", "framework-test-1.0-all.jar", "worker"]
+
+  worker2:
+    image: marcelodock/framerasp
+    ports:
+      - "2562:2562" # Akka port
+
+    depends_on:
+      - "master2"
+    environment:
+      CLUSTER_IP: worker2
+      CLUSTER_PORT: 2562
+      SEED1_IP: worker2
+      SEED1_PORT: 2562
+      MASTER_SYSTEM_NAME: MasterSystem2
+      MASTER_IP: master2
+      MASTER_PORT: 2552
+      #      SEED2_TCP_ADDR: seed2
+      CASSANDRA_SEED: cass
+      ROLE: worker
+    networks:
+      - akka-wsn
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.hostname == raspimarcelo]
+      restart_policy:
+        condition: any
+        delay: 10s
+    command: ["./wait-for-it.sh", "master2:2552", "-t", "0", "--", "java", "-jar", "framework-test-1.0-all.jar", "worker"]
 
   mqttbroker:
-#    image: arm32v6/eclipse-mosquitto
-    image: eclipse-mosquitto
+    image: arm32v6/eclipse-mosquitto
+#    image: eclipse-mosquitto
     ports:
       - "1883:1883" # Listen port
       - "9001:9001" # Websocket port
     deploy:
       replicas: 1
       placement:
-        constraints: [node.role == manager]
+        constraints: [node.hostname == raspi1]
     networks:
       - akka-wsn
 
@@ -80,15 +143,17 @@ services:
         delay: 10s
 
   master:
-    image: frametest
+    image: marcelodock/framerasp
     ports:
       - "2550:2550"
+    depends_on:
+      - "cass"
     environment:
       CLUSTER_IP: master
       CLUSTER_PORT: 2550
       SEED1_IP: master
       SEED1_PORT: 2550
-      MASTER_SYSTEM_NAME: MasterSystem
+      MASTER_SYSTEM_NAME: MasterSystem1
       CASSANDRA_SEED: cass
       #      SEED2_TCP_ADDR: seed2
       ROLE: master
@@ -97,14 +162,36 @@ services:
     deploy:
       replicas: 1
       placement:
-        constraints: [node.role == manager]
+        constraints: [node.hostname == raspi1]
       restart_policy:
         condition: any
         delay: 20s
-      update_config:
-        parallelism: 1
-        delay: 10s
-    command: gradle run --args="master"
+    command: ["./wait-for-it.sh", "cass:9042", "-t", "0", "--", "java", "-jar", "framework-test-1.0-all.jar", "master"]
+
+  master2:
+    image: marcelodock/framerasp
+    ports:
+      - "2552:2552"
+    depends_on:
+      - "cass"
+    environment:
+      CLUSTER_IP: master2
+      CLUSTER_PORT: 2552
+      SEED1_IP: master2
+      SEED1_PORT: 2552
+      MASTER_SYSTEM_NAME: MasterSystem2
+      CASSANDRA_SEED: cass
+      ROLE: master
+    networks:
+      - akka-wsn
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.hostname == raspi2]
+      restart_policy:
+        condition: any
+        delay: 20s
+    command: ["./wait-for-it.sh", "cass:9042", "-t", "0", "--", "java", "-jar", "framework-test-1.0-all.jar", "master"]
 
 networks:
   akka-wsn:
