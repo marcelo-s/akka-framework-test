@@ -42,11 +42,11 @@ public class Worker extends AbstractActor {
     private Map<String, List<Integer>> createArimaOrderParamsMap() {
         HashMap<String, List<Integer>> arimaParams = new HashMap<>();
         // Create p, d ,q params for different ARIMA models
-        arimaParams.put("ArimaOrderParams1", Arrays.asList(0, 0, 0));
-        arimaParams.put("ArimaOrderParams2", Arrays.asList(1, 0, 0));
-        arimaParams.put("ArimaOrderParams3", Arrays.asList(0, 0, 1));
-        arimaParams.put("ArimaOrderParams4", Arrays.asList(2, 1, 1));
-        arimaParams.put("ArimaOrderParams5", Arrays.asList(3, 2, 1));
+        arimaParams.put("ArimaOrderParams1", Arrays.asList(1, 2, 3));
+        arimaParams.put("ArimaOrderParams2", Arrays.asList(2, 3, 2));
+        arimaParams.put("ArimaOrderParams3", Arrays.asList(3, 4, 3));
+        arimaParams.put("ArimaOrderParams4", Arrays.asList(4, 5, 4));
+        arimaParams.put("ArimaOrderParams5", Arrays.asList(5, 2, 5));
         return arimaParams;
     }
 

@@ -119,7 +119,6 @@ public class IoTManager extends AbstractActor {
                 sensorData.getSensorType(),
                 sensorData.getSensorId()
         );
-        log.info("IoTManager >>> Sending sensorData : {} to cluster master", sensorData.getDataId());
 
         ActorRef actorToPipe = sensorIdToActorMap.get(sensorData.getSensorId());
         if (actorToPipe == null) {
@@ -127,6 +126,7 @@ public class IoTManager extends AbstractActor {
             log.warning("IoT Manager >>> Sensor not registered, IGNORING : Sensor {}-{}", sensorData.getSensorType(), sensorData.getSensorId());
         } else {
             // Set the ActorRef to this IoTManager, for the master to return the result of processing
+            log.info("IoTManager >>> Sending sensorData : {} to cluster master", sensorData.getDataId());
             sensorData.setIotManager(self());
             MasterIoTProtocol.SensorDataForProcess sensorDataForProcess = new MasterIoTProtocol.SensorDataForProcess(sensorData);
             ClusterClient.SendToAll message = new ClusterClient.SendToAll("/user/master/singleton", sensorDataForProcess);

@@ -30,6 +30,7 @@ shadowJar {
     transform(AppendingTransformer) {
         resource = 'reference.conf'
     }
+    archiveClassifier.set('deploy')
     with jar
 }
 

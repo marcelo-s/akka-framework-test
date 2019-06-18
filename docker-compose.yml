@@ -1,8 +1,10 @@
 version: '3'
 services:
 
+  # -------------------------------------------- IoT Nodes --------------------------------------------
+
   iot:
-    image: marcelodock/framerasp
+    image: marcelodock/frameraspi
     ports:
       - "2540:2540"
     depends_on:
@@ -19,7 +21,6 @@ services:
       MQTT_IP: mqttbroker
       MQTT_PORT: 1883
       CASSANDRA_SEED: cass
-      #      SEED2_TCP_ADDR: seed2
       ROLE: iot
     networks:
       - akka-wsn
@@ -27,19 +28,19 @@ services:
       replicas: 1
       placement:
         constraints: [node.hostname == raspi1]
-    command: ["./wait-for-it.sh", "master:2550", "-t", "0", "--", "java", "-jar", "framework-test-1.0-all.jar", "iot", "1"]
+    command: ["./wait-for-it.sh", "master:2550", "-t", "0", "--", "java", "-jar", "framework-test-1.0-deploy.jar", "iot", "10"]
 
   iot2:
-    image: marcelodock/framerasp
+    image: marcelodock/frameraspi
     ports:
       - "2542:2542"
     depends_on:
       - "master2"
       - "mqttbroker"
     environment:
-      CLUSTER_IP: iot
+      CLUSTER_IP: iot2
       CLUSTER_PORT: 2542
-      SEED1_IP: iot
+      SEED1_IP: iot2
       SEED1_PORT: 2542
       MASTER_SYSTEM_NAME: MasterSystem2
       MASTER_IP: master2
@@ -47,7 +48,6 @@ services:
       MQTT_IP: mqttbroker
       MQTT_PORT: 1883
       CASSANDRA_SEED: cass
-      #      SEED2_TCP_ADDR: seed2
       ROLE: iot
     networks:
       - akka-wsn
@@ -55,24 +55,29 @@ services:
       replicas: 1
       placement:
         constraints: [node.hostname == raspi2]
-    command: ["./wait-for-it.sh", "master2:2552", "-t", "0", "--", "java", "-jar", "framework-test-1.0-all.jar", "iot", "1"]
+    command: ["./wait-for-it.sh", "master2:2552", "-t", "0", "--", "java", "-jar", "framework-test-1.0-deploy.jar", "iot", "10"]
 
+
+  # -------------------------------------------- Worker Nodes --------------------------------------------
+
+  # ------------------------- Worker Nodes WorkerSystemA -------------------------
+
+
+  # Seed node of WorkerSystemA (Odd number are WorkerSystemA, except worker3 which is a mixed one)
   worker1:
-    image: marcelodock/framerasp
+    image: marcelodock/frameraspi
     ports:
       - "2560:2560" # Akka port
       - "8558:8558" # Http Management port
-    depends_on:
-      - "master"
     environment:
       CLUSTER_IP: worker1
-      CLUSTER_PORT: 2560
-      SEED1_IP: worker1
-      SEED1_PORT: 2560
-      MASTER_SYSTEM_NAME: MasterSystem1
-      MASTER_IP: master
-      MASTER_PORT: 2550
-      #      SEED2_TCP_ADDR: seed2
+      CLUSTER_PORT_A: 2560
+      SEED1_IP_A: worker1
+      SEED1_PORT_A: 2560
+      WORKER_CLUSTER_NAME: "WorkerSystemA"
+      MASTER_SYSTEM_NAME_A: MasterSystem1
+      MASTER_IP_A: master
+      MASTER_PORT_A: 2550
       CASSANDRA_SEED: cass
       ROLE: worker
     networks:
@@ -80,14 +85,99 @@ services:
     deploy:
       replicas: 1
       placement:
-        constraints: [node.hostname == raspimarcelo]
+        constraints: [node.hostname == raspi3]
       restart_policy:
         condition: any
         delay: 10s
-    command: ["./wait-for-it.sh", "master:2550", "-t", "0", "--", "java", "-jar", "framework-test-1.0-all.jar", "worker"]
+    command: ["./wait-for-it.sh", "master:2550", "-t", "0", "--", "java", "-jar", "framework-test-1.0-deploy.jar", "worker"]
 
+  # Seed node of WorkerSystemA
+  worker5:
+    image: marcelodock/frameraspi
+    ports:
+      - "2565:2565" # Akka port
+    environment:
+      CLUSTER_IP: worker5
+      CLUSTER_PORT_A: 2565
+      SEED1_IP_A: worker1
+      SEED1_PORT_A: 2560
+      WORKER_CLUSTER_NAME: "WorkerSystemA"
+      MASTER_SYSTEM_NAME_A: MasterSystem1
+      MASTER_IP_A: master
+      MASTER_PORT_A: 2550
+      CASSANDRA_SEED: cass
+      ROLE: worker
+    networks:
+      - akka-wsn
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.hostname == raspi4]
+      restart_policy:
+        condition: any
+        delay: 10s
+    command: ["./wait-for-it.sh", "master:2550", "-t", "0", "--", "java", "-jar", "framework-test-1.0-deploy.jar", "worker"]
+
+  # Seed node of WorkerSystemA
+  worker7:
+    image: marcelodock/frameraspi
+    ports:
+      - "2567:2567" # Akka port
+    environment:
+      CLUSTER_IP: worker7
+      CLUSTER_PORT_A: 2567
+      SEED1_IP_A: worker1
+      SEED1_PORT_A: 2560
+      WORKER_CLUSTER_NAME: "WorkerSystemA"
+      MASTER_SYSTEM_NAME_A: MasterSystem1
+      MASTER_IP_A: master
+      MASTER_PORT_A: 2550
+      CASSANDRA_SEED: cass
+      ROLE: worker
+    networks:
+      - akka-wsn
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.hostname == raspi5]
+      restart_policy:
+        condition: any
+        delay: 10s
+    command: ["./wait-for-it.sh", "master:2550", "-t", "0", "--", "java", "-jar", "framework-test-1.0-deploy.jar", "worker"]
+
+  # Seed node of WorkerSystemA
+  worker9:
+    image: marcelodock/frameraspi
+    ports:
+      - "2569:2569" # Akka port
+    environment:
+      CLUSTER_IP: worker9
+      CLUSTER_PORT_A: 2569
+      SEED1_IP_A: worker1
+      SEED1_PORT_A: 2560
+      WORKER_CLUSTER_NAME: "WorkerSystemA"
+      MASTER_SYSTEM_NAME_A: MasterSystem1
+      MASTER_IP_A: master
+      MASTER_PORT_A: 2550
+      CASSANDRA_SEED: cass
+      ROLE: worker
+    networks:
+      - akka-wsn
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.hostname == raspi6]
+      restart_policy:
+        condition: any
+        delay: 10s
+    command: ["./wait-for-it.sh", "master:2550", "-t", "0", "--", "java", "-jar", "framework-test-1.0-deploy.jar", "worker"]
+
+
+  # ------------------------- Worker Nodes WorkerSystemB -------------------------
+
+  # Seed node of WorkerSystemB
   worker2:
-    image: marcelodock/framerasp
+    image: marcelodock/frameraspi
     ports:
       - "2562:2562" # Akka port
 
@@ -95,13 +185,13 @@ services:
       - "master2"
     environment:
       CLUSTER_IP: worker2
-      CLUSTER_PORT: 2562
-      SEED1_IP: worker2
-      SEED1_PORT: 2562
-      MASTER_SYSTEM_NAME: MasterSystem2
-      MASTER_IP: master2
-      MASTER_PORT: 2552
-      #      SEED2_TCP_ADDR: seed2
+      CLUSTER_PORT_A: 2562
+      SEED1_IP_A: worker2
+      SEED1_PORT_A: 2562
+      WORKER_CLUSTER_NAME: "WorkerSystemB"
+      MASTER_SYSTEM_NAME_A: MasterSystem2
+      MASTER_IP_A: master2
+      MASTER_PORT_A: 2552
       CASSANDRA_SEED: cass
       ROLE: worker
     networks:
@@ -109,11 +199,124 @@ services:
     deploy:
       replicas: 1
       placement:
-        constraints: [node.hostname == raspimarcelo]
+        constraints: [node.hostname == raspi7]
       restart_policy:
         condition: any
         delay: 10s
-    command: ["./wait-for-it.sh", "master2:2552", "-t", "0", "--", "java", "-jar", "framework-test-1.0-all.jar", "worker"]
+    command: ["./wait-for-it.sh", "master2:2552", "-t", "0", "--", "java", "-jar", "framework-test-1.0-deploy.jar", "worker"]
+
+  # Seed node of WorkerSystemB
+  worker6:
+    image: marcelodock/frameraspi
+    ports:
+      - "2566:2566" # Akka port
+    depends_on:
+      - "master2"
+    environment:
+      CLUSTER_IP: worker6
+      CLUSTER_PORT_A: 2566
+      SEED1_IP_A: worker2
+      SEED1_PORT_A: 2562
+      WORKER_CLUSTER_NAME: "WorkerSystemB"
+      MASTER_SYSTEM_NAME_A: MasterSystem2
+      MASTER_IP_A: master2
+      MASTER_PORT_A: 2552
+      CASSANDRA_SEED: cass
+      ROLE: worker
+    networks:
+      - akka-wsn
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.hostname == raspi8]
+      restart_policy:
+        condition: any
+        delay: 10s
+    command: ["./wait-for-it.sh", "master2:2552", "-t", "0", "--", "java", "-jar", "framework-test-1.0-deploy.jar", "worker"]
+
+  # Seed node of WorkerSystemB
+  worker8:
+    image: marcelodock/frameraspi
+    ports:
+      - "2568:2568" # Akka port
+    depends_on:
+      - "master2"
+    environment:
+      CLUSTER_IP: worker8
+      CLUSTER_PORT_A: 2568
+      SEED1_IP_A: worker2
+      SEED1_PORT_A: 2562
+      WORKER_CLUSTER_NAME: "WorkerSystemB"
+      MASTER_SYSTEM_NAME_A: MasterSystem2
+      MASTER_IP_A: master2
+      MASTER_PORT_A: 2552
+      CASSANDRA_SEED: cass
+      ROLE: worker
+    networks:
+      - akka-wsn
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.hostname == raspi9]
+      restart_policy:
+        condition: any
+        delay: 10s
+    command: ["./wait-for-it.sh", "master2:2552", "-t", "0", "--", "java", "-jar", "framework-test-1.0-deploy.jar", "worker"]
+
+
+
+  # ------------------------- Mixed Worker Nodes > WorkerSystemA and WorkerSystemB -------------------------
+
+  worker3:
+    image: marcelodock/frameraspi
+    ports:
+      - "2563:2563" # Akka port WorkerSystemA
+      - "2564:2564" # Akka port WorkerSystemB
+    depends_on:
+      - "master"
+      - "master2"
+    environment:
+
+      # Ip address is the same for any system on this device
+      CLUSTER_IP: worker3
+
+      # Set Seed of WorkerSystemA to Worker1
+      SEED1_IP_A: worker1
+      SEED1_PORT_A: 2560
+      WORKER_CLUSTER_NAME_A: "WorkerSystemA"
+
+      # Set ip and ports of WorkerSystemA on this device
+      CLUSTER_PORT_A: 2563
+      MASTER_SYSTEM_NAME_A: MasterSystem1
+      MASTER_IP_A: master
+      MASTER_PORT_A: 2550
+
+
+      # Set Seed of WorkerSystemB to Worker2
+      SEED1_IP_B: worker2
+      SEED1_PORT_B: 2562
+      WORKER_CLUSTER_NAME_B: "WorkerSystemB"
+
+      # Set ip and ports of WorkerSystemB on this device
+      CLUSTER_PORT_B: 2564
+      MASTER_SYSTEM_NAME_B: MasterSystem2
+      MASTER_IP_B: master2
+      MASTER_PORT_B: 2552
+
+      CASSANDRA_SEED: cass
+      ROLE: worker
+    networks:
+      - akka-wsn
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.hostname == raspi10]
+      restart_policy:
+        condition: any
+        delay: 10s
+    command: ["./wait-for-it.sh", "master:2550", "-t", "0", "--", "java", "-jar", "framework-test-1.0-deploy.jar", "worker"]
+
+  # -------------------------------------------- MQTT Broker --------------------------------------------
 
   mqttbroker:
     image: arm32v6/eclipse-mosquitto
@@ -127,6 +330,8 @@ services:
         constraints: [node.hostname == raspi1]
     networks:
       - akka-wsn
+
+  # -------------------------------------------- Cassandra cluster --------------------------------------------
 
   cass:
     image: cassandra
@@ -142,8 +347,10 @@ services:
         condition: any
         delay: 10s
 
+  # -------------------------------------------- Master Nodes --------------------------------------------
+
   master:
-    image: marcelodock/framerasp
+    image: marcelodock/frameraspi
     ports:
       - "2550:2550"
     depends_on:
@@ -166,10 +373,10 @@ services:
       restart_policy:
         condition: any
         delay: 20s
-    command: ["./wait-for-it.sh", "cass:9042", "-t", "0", "--", "java", "-jar", "framework-test-1.0-all.jar", "master"]
+    command: ["./wait-for-it.sh", "cass:9042", "-t", "0", "--", "java", "-jar", "framework-test-1.0-deploy.jar", "master"]
 
   master2:
-    image: marcelodock/framerasp
+    image: marcelodock/frameraspi
     ports:
       - "2552:2552"
     depends_on:
@@ -191,7 +398,7 @@ services:
       restart_policy:
         condition: any
         delay: 20s
-    command: ["./wait-for-it.sh", "cass:9042", "-t", "0", "--", "java", "-jar", "framework-test-1.0-all.jar", "master"]
+    command: ["./wait-for-it.sh", "cass:9042", "-t", "0", "--", "java", "-jar", "framework-test-1.0-deploy.jar", "master"]
 
 networks:
   akka-wsn:
