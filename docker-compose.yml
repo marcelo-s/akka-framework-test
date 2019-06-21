@@ -28,7 +28,7 @@ services:
       replicas: 1
       placement:
         constraints: [node.hostname == raspi1]
-    command: ["./wait-for-it.sh", "master:2550", "-t", "0", "--", "java", "-jar", "framework-test-1.0-deploy.jar", "iot", "10"]
+    command: ["./wait-for-it.sh", "master:2550", "-t", "0", "--", "java", "-jar", "framework-test-1.0-deploy.jar", "iot", "20"]
 
   iot2:
     image: marcelodock/frameraspi
@@ -55,7 +55,7 @@ services:
       replicas: 1
       placement:
         constraints: [node.hostname == raspi2]
-    command: ["./wait-for-it.sh", "master2:2552", "-t", "0", "--", "java", "-jar", "framework-test-1.0-deploy.jar", "iot", "10"]
+    command: ["./wait-for-it.sh", "master2:2552", "-t", "0", "--", "java", "-jar", "framework-test-1.0-deploy.jar", "iot", "20"]
 
 
   # -------------------------------------------- Worker Nodes --------------------------------------------
@@ -257,7 +257,7 @@ services:
     deploy:
       replicas: 1
       placement:
-        constraints: [node.hostname == raspi9]
+        constraints: [node.hostname == raspi10]
       restart_policy:
         condition: any
         delay: 10s
@@ -310,7 +310,7 @@ services:
     deploy:
       replicas: 1
       placement:
-        constraints: [node.hostname == raspi10]
+        constraints: [node.hostname == raspi9]
       restart_policy:
         condition: any
         delay: 10s

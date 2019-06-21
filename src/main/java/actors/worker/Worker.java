@@ -42,11 +42,12 @@ public class Worker extends AbstractActor {
     private Map<String, List<Integer>> createArimaOrderParamsMap() {
         HashMap<String, List<Integer>> arimaParams = new HashMap<>();
         // Create p, d ,q params for different ARIMA models
-        arimaParams.put("ArimaOrderParams1", Arrays.asList(1, 2, 3));
-        arimaParams.put("ArimaOrderParams2", Arrays.asList(2, 3, 2));
-        arimaParams.put("ArimaOrderParams3", Arrays.asList(3, 4, 3));
-        arimaParams.put("ArimaOrderParams4", Arrays.asList(4, 5, 4));
-        arimaParams.put("ArimaOrderParams5", Arrays.asList(5, 2, 5));
+        arimaParams.put("ArimaOrderParams1", Arrays.asList(1, 1, 2));
+        arimaParams.put("ArimaOrderParams2", Arrays.asList(2, 2, 2));
+        arimaParams.put("ArimaOrderParams3", Arrays.asList(3, 1, 2));
+        arimaParams.put("ArimaOrderParams4", Arrays.asList(3, 2, 2));
+        arimaParams.put("ArimaOrderParams5", Arrays.asList(3, 3, 2));
+        arimaParams.put("ArimaOrderParams5", Arrays.asList(3, 2, 3));
         return arimaParams;
     }
 
@@ -137,8 +138,8 @@ public class Worker extends AbstractActor {
     private void handleWorkProcessed(WorkerProtocol.WorkProcessed workProcessed) {
         resultsToMasterDeadlinesMap.remove(workProcessed.getResult().getSensorDataId());
         ProcessingResult result = workProcessed.getResult();
-        log.info("Worker >>> Processed work: {}-{} | SensorData Id {}", result.getSensorType(),
-                result.getSensorId(), result.getSensorDataId());
+        log.info("Worker >>> Processed work with SensorDataId: {}",
+                result.getSensorDataId());
         resultsToMasterDeadlinesMap.put(
                 workProcessed.getResult().getSensorDataId(),
                 new WorkerProtocol.ResultDeadline(result, Deadline.now().$plus(Duration.create(10, TimeUnit.SECONDS))));

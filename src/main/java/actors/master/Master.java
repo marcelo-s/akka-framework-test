@@ -239,6 +239,7 @@ public class Master extends AbstractPersistentActor {
                 SensorDataEvent.DataSentForProcess dataSentForProcess = new SensorDataEvent.DataSentForProcess(nextSensorData.getDataId());
                 persist(dataSentForProcess, (dataSentForProcessEvent) -> this.handleDataSentForProcessEvent(dataSentForProcessEvent, nextSensorData, workerRegion));
             } else {
+                // In this case, if there are no workers the data is not sent for processing but they are still on the list of pendingSensorData
                 log.warning("Cluster Master >>> THERE ARE NO WORK REGIONS TO SEND THE WORK");
             }
         }

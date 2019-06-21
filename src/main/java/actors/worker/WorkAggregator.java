@@ -84,7 +84,8 @@ public class WorkAggregator extends AbstractActor {
     }
 
     private int computeMeasureInterval() {
-        return random.nextInt(10, 20);
+//        return random.nextInt(10, 20);
+        return 5;
     }
 
     private Sensor.OperationState computeOperationalState() {

@@ -1,13 +1,12 @@
-# Akka (Java) IoT Wireless Sensor Network with Docker Swarm
+# Akka (Java) IoT Wireless Sensor Network Framework with Docker Swarm. Using FatJar and metrics.
 
-This is a Java implementation of an IoT Scenario that consist of a Wireless Sensor Network that sends readings from
+This is a Java implementation of an IoT Framework for a Wireless Sensor Network scenario that sends readings from
 the sensors to create forecasting models using the ARIMA technique.
 
-Yes, this is a Java application! Finally!
+There are special classes created to measure the processing time of the tasks. This framework uses docker swarm to 
+deploy the different nodes of the application on the fog network. 
 
 ## Architecture components
-
-The IoT scenario has the following componets:
 
 * IoT Cluster: Cluster with the IoT sensors and an IoT manager. The manager is in charge of receiving all the data from 
 the sensors and passing it to the Master cluster. Uses Mosquitto broker.
@@ -31,10 +30,40 @@ in swarm mode.
 
 It is also possible to run this application without Docker. Another repository will be created for this local version.
 
+### FatJar building process
+
+**IMPORTANT: Any change on the source files of the project will require a new FatJar. So after every modification 
+build the project again! Also a new image must be built and published with the new generated FatJar.**
+
+This project builds the whole project to a FatJar file that includes all Akka dependencies.
+
+In order to build the project there is a specific task called "shadowJar" which uses a special plugin for building
+FarJar applications with gradle.
+
+Go to the root of the project and build using gradle:
+
+```
+gradle clean shadowJar
+``` 
+
+This command will compile and build the project generating a FatJar file, located on the build/libs directory.
+
 ### Docker images
 
+**IMPORTANT: When deploying to remote devices, make sure you publish your images to a public repository so that the
+remote nodes can download the corresponding images!** 
+
+
 Make sure the corresponding images match the different nodes hardware architectures.
-You can build the images locally, using the provided Dockerfile, or use the images available on Docker Hub (default).
+You can build the images locally, using the provided Dockerfile. The dockerfile provided on this project contains two
+different "FROM" statements:
+ 
+ * One uses "openJDK". Build with this base image if you are planning to deploy on a linux machine x86 architecture. This 
+ is a typical linux computer.
+ * The other ones uses "arm32v7/gradle" as a base image. Build with this base image if you are planning to deploy the 
+ application on ARM architectures, such as a Raspberry Pi device.
+ 
+ If none work, try to find a base image for your machine. The only main tool it needs is Java 8, which executes the FatJar.
 
 
 For this application, Raspberry Pi devices were used as Worker nodes, so specific images were needed for 
@@ -47,12 +76,19 @@ service, as there is no Docker image (at the moment of committing this file) for
 All the services can be deployed on different machines, just change the docker-compose.yml file in the 
 "deploy > placement > constraints" value.
 
+### Docker compose file
+
+The docker-compose.yaml file contains all the services of the application. Each service represents a node.
+You can change/add/remove any node using the corresponding information on each of the nodes.
+
+Each service uses a set of environment variables to set the Akka configuration. Please refer to the configuration files 
+of the project to see how these environmental variables are used in the application.
 
 #### Docker swarm setup
 
 In general follow these steps: [Create a swarm](https://docs.docker.com/engine/swarm/swarm-tutorial/create-swarm/)
 
-However it could be as simple as this:
+It could be as simple as this:
 * Go to the manager to be node and execute the following command: 　
 ```
 docker swarm init
@@ -82,10 +118,10 @@ docker stack deploy --compose-file docker-compose.yml akkaclusterswarm
 
 This will deploy all the services defined in the docker-compose.yml file.
 
-The required images are located on the public Docker Hub, so it can be downloaded directly from any node.
+The required images must be available in a public Docker Hub, so that they can be downloaded directly from any node.
 
 The hostnames and ports of the nodes are being set as environment variables on the
-docker-compose.yml file. Then on the application.conf these variables are obtained using 
+docker-compose.yml file. Then, on the application.conf, these variables are obtained using 
 the HOCON syntax and being replaced in the corresponding places.
 
 To see the deployed stack, type the following command the manager node:
@@ -103,7 +139,7 @@ This should list all the services that are listed on the docker-compose.yml file
 
 ###See logs/details of the state of a service
 
-IMPORTANT: It can take a while to download the images, so the services will not start immediately.
+**IMPORTANT: It can take a while to download the images, so the services will not start immediately.**
 
 
 Once the command for deploying is used, only a single line indicating that the service is deployed (for each service)
@@ -154,7 +190,7 @@ Looks at the repo of the project:
 
 ### Description
 
-#### Application workflow
+#### Framework workflow
 
 1. A sensor actor in the IoT Cluster generates data readings to be processed. These readings consist of an array of values. This array of values is put in a “envelope” called SensorData, which includes other relevant information with respect to the data readings, such as the sensorId.
 2. The sensor publishes the SensorData to the corresponding MQTT topic on the IoT Cluster.
@@ -230,4 +266,8 @@ This is the configuration file for the Worker cluster. It contains all the confi
 
 * Initial contact list for the cluster-client mechanism
 * Routing configuration for the cluster-aware routers mechanism
+
+Another important difference in this configuration file is that it has 2 different configuration. This
+is done in order to enable two working systems on the same node. These systems are named "WorkerSystemA" 
+and "WorkerSystemB" 
 

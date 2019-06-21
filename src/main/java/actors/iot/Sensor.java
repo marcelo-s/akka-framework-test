@@ -79,7 +79,8 @@ public class Sensor extends AbstractActor {
 
     private void setSensorState() {
         operationState = OperationState.ON;
-        measureInterval = random.nextInt(2, 6);
+//        measureInterval = random.nextInt(2, 6);
+        measureInterval = 5;
     }
 
     @Override
@@ -118,13 +119,12 @@ public class Sensor extends AbstractActor {
 
     @Override
     public Receive createReceive() {
-        return working();
+        return readyToSendData();
     }
 
-    private Receive working() {
+    private Receive readyToSendData() {
         return receiveBuilder()
                 .match(Tick.class, this::handleTick)
-                .match(ProcessingResult.class, this::handleWorkResult)
                 .build();
     }
 
@@ -145,13 +145,13 @@ public class Sensor extends AbstractActor {
 
         MqttMessage mqttMessage = MqttPayloadManager.createMqttMessage(sensorData, mqttTopic);
         publish(mqttMessage);
-        getContext().become(waitAccepted(sensorData));
+        getContext().become(waitForProcessing(sensorData));
     }
 
     private double[] generateDataReadings() {
         Normal normal = new Normal(25, 3);
 
-        double[] values = new double[7];
+        double[] values = new double[300];
         for (int i = 0; i < values.length; i++) {
             values[i] = normal.rand();
         }
@@ -171,7 +171,7 @@ public class Sensor extends AbstractActor {
         measureInterval = result.getMeasureInterval();
         operationState = result.getOperationState();
         modelForecastValues = result.getModelForecastValues();
-
+        getContext().become(readyToSendData());
         rescheduleTick();
     }
 
@@ -195,10 +195,11 @@ public class Sensor extends AbstractActor {
     }
 
 
-    private Receive waitAccepted(SensorData sensorData) {
+    private Receive waitForProcessing(SensorData sensorData) {
         return receiveBuilder()
                 .match(IoTProtocol.SensorDataAccepted.class, (sensorDataAccepted) -> this.handleDataAccepted(sensorData))
                 .match(IoTProtocol.SensorDataNotAccepted.class, (nok) -> this.handleDataNotAccepted(sensorData))
+                .match(ProcessingResult.class, this::handleWorkResult)
                 .matchAny(this::handleAny)
                 .build();
 
@@ -210,8 +211,8 @@ public class Sensor extends AbstractActor {
 
     private void handleDataAccepted(SensorData sensorData) {
         log.info("Sensor >>> Acknowledge from IoTManager received for SensorData Id {}", sensorData.getDataId());
-        getContext().unbecome();
-        tickSchedule = scheduleOnceMessage();
+        log.info("Sensor >>> Waiting for processing of SensorData Id {}", sensorData.getDataId());
+//        tickSchedule = scheduleOnceMessage();
     }
 
     private void handleDataNotAccepted(SensorData sensorData) {
